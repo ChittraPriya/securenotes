@@ -27,6 +27,8 @@ type NotesSidebarItem = {
 
 type NotesSidebarProps = {
   isOpen: boolean;
+  ownedProjects?: NotesSidebarItem[];
+  sharedProjects?: NotesSidebarItem[];
   notes?: NotesSidebarItem[];
   onClose?: () => void;
   onCreate?: () => void;
@@ -37,6 +39,8 @@ type NotesSidebarProps = {
 
 function NotesSidebar({
   isOpen,
+  ownedProjects = [],
+  sharedProjects = [],
   notes = [],
   onClose,
   onCreate,
@@ -46,9 +50,9 @@ function NotesSidebar({
 }: NotesSidebarProps) {
   const [activeTab, setActiveTab] = useState<"my" | "shared">("my");
 
-  const myNotes = notes.filter((note) => note.owned);
+  const myNotes = ownedProjects.length > 0 ? ownedProjects : notes.filter((note) => note.owned);
 
-  const sharedNotes = notes.filter((note) => !note.owned);
+  const sharedNotes = sharedProjects.length > 0 ? sharedProjects : notes.filter((note) => !note.owned);
 
   return (
     <aside
@@ -59,9 +63,9 @@ function NotesSidebar({
         fixed top-14 bottom-0 left-0 z-40
         flex w-80 max-w-[calc(100vw-1rem)]
         flex-col
-        border-r border-[var(--border-default)]
-        bg-[var(--bg-surface)]
-        text-[var(--text-primary)]
+        border-r border-border-default
+        bg-bg-surface
+        text-text-primary
         shadow-xl
         transition-transform duration-200
         `,
@@ -75,7 +79,7 @@ function NotesSidebar({
       <div
         className="
       border-b
-      border-[var(--border-default)]
+      border-border-default
       px-4
       py-4
       "
@@ -113,7 +117,7 @@ function NotesSidebar({
           className="
         flex
         rounded-lg
-        bg-[var(--bg-surface-raised)]
+        bg-bg-surface-raised
         p-1
         "
         >
@@ -128,8 +132,8 @@ function NotesSidebar({
               transition
               `,
               activeTab === "my"
-                ? "bg-[var(--bg-surface)] font-medium"
-                : "text-[var(--text-secondary)]",
+                ? "bg-bg-surface font-medium"
+                : "text-text-secondary",
             )}
           >
             My Notes
@@ -146,8 +150,8 @@ function NotesSidebar({
               transition
               `,
               activeTab === "shared"
-                ? "bg-[var(--bg-surface)] font-medium"
-                : "text-[var(--text-secondary)]",
+                ? "bg-bg-surface font-medium"
+                : "text-text-secondary",
             )}
           >
             Shared
@@ -173,7 +177,7 @@ function NotesSidebar({
           mb-3
           text-xs
           font-medium
-          text-[var(--text-muted)]
+          text-text-muted
           "
               >
                 MY NOTES
@@ -193,7 +197,7 @@ function NotesSidebar({
                 px-3
                 py-2
                 text-sm
-                hover:bg-[var(--bg-surface-raised)]
+                hover:bg-bg-surface-raised
                 "
                   >
                     <Link
@@ -209,7 +213,7 @@ function NotesSidebar({
                         className="
                     h-4
                     w-4
-                    text-[var(--text-muted)]
+                    text-text-muted
                     "
                       />
 
@@ -229,7 +233,7 @@ function NotesSidebar({
                         className="
                     rounded-md
                     p-1.5
-                    hover:bg-[var(--bg-surface)]
+                    hover:bg-bg-surface
                     "
                       >
                         <Pencil className="h-4 w-4" />
@@ -254,7 +258,7 @@ function NotesSidebar({
                 <p
                   className="
               text-sm
-              text-[var(--text-muted)]
+              text-text-muted
               "
                 >
                   No notes yet
@@ -272,7 +276,7 @@ function NotesSidebar({
           mb-3
           text-xs
           font-medium
-          text-[var(--text-muted)]
+          text-text-muted
           "
               >
                 SHARED WITH ME
@@ -291,7 +295,7 @@ function NotesSidebar({
                 rounded-md
                 px-3
                 py-2
-                hover:bg-[var(--bg-surface-raised)]
+                hover:bg-bg-surface-raised
                 "
                   >
                     <div
@@ -315,7 +319,7 @@ function NotesSidebar({
                         <p
                           className="
                     text-xs
-                    text-[var(--text-muted)]
+                    text-text-muted
                     "
                         >
                           From: {note.sharedBy}
@@ -327,7 +331,7 @@ function NotesSidebar({
                       <span
                         className="
                   rounded
-                  bg-[var(--bg-surface-raised)]
+                  bg-bg-surface-raised
                   px-2
                   py-1
                   text-xs
@@ -342,7 +346,7 @@ function NotesSidebar({
                 <p
                   className="
               text-sm
-              text-[var(--text-muted)]
+              text-text-muted
               "
                 >
                   No shared notes
@@ -358,7 +362,7 @@ function NotesSidebar({
       <div
         className="
       border-t
-      border-[var(--border-default)]
+      border-border-default
       p-3
       "
       >

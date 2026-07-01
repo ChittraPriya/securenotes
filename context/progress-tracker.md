@@ -3,18 +3,19 @@
 Update this file after every meaningful implementation change.
 
 ## Current Phase
-Clerk auth pages and route protection scaffolded.
+Editor home sidebar and dialogs are now wired to the real project API and server-fetched project data.
 
 ## Current Goal
-Implement Clerk-based sign-in and sign-up pages with a secure auth layout that matches the application's light design system.
+Complete editor-home project CRUD flows, workspace navigation, and verify the build.
 
 ## Completed
 - Design system and UI primitives: shadcn/ui initialized with Radix/Lucide primitives, requested components installed, `lucide-react` installed, shared `cn()` helper added, and shadcn theme variables mapped to the Secure Notes light theme tokens.
 - Editor chrome scaffolding: added reusable editor navbar, floating notes sidebar, and dialog content pattern per `context/feature-spec/02-editor.md`.
 - Clerk auth pages: added `/login` and `/register` routes using `<SignIn />` and `<SignUp />`, custom Clerk appearance via CSS variables, and `ClerkProvider` in the root layout.
 - Route protection: added root `middleware.ts` to allow unauthenticated access to public auth and share routes.
-
- - Prisma models & client: added `prisma/models/notes.prisma`, duplicated models in `prisma/schema.prisma` for CLI compatibility, and exported a cached Prisma client at `lib/prisma.ts`. Migration applied and Prisma client generated; `npm run build` verified.
+- Prisma models & client: added `prisma/models/notes.prisma`, duplicated models in `prisma/schema.prisma` for CLI compatibility, and exported a cached Prisma client at `lib/prisma.ts`. Migration applied and Prisma client generated; `npm run build` verified.
+- Backend notes/project API routes: added `GET /api/notes`, `POST /api/notes`, `PATCH /api/notes/[notesId]`, and `DELETE /api/notes/[notesId]` using the authenticated Clerk user ID as `ownerId`, defaulting new records to `Untitled Project`, returning `401` for unauthenticated requests, and returning `403` for non-owner rename/delete attempts.
+- Editor home API wiring: the editor home page now fetches owned/shared projects server-side, passes them into the sidebar, and uses a project actions hook to create, rename, and delete projects through the real API with dialog state and workspace navigation.
 
 ## In Progress
 - Building editor home with project dialogs and sidebar actions.
@@ -42,6 +43,7 @@ Implement Clerk-based sign-in and sign-up pages with a secure auth layout that m
 - UI theme is dark-only at `:root`: shadcn's semantic variables (`--background`, `--card`, `--border`, etc.) are aliases to the named Secure Notes tokens, so components do not fall back to shadcn's default light palette when no `.dark` class is present.
 - Notes sidebar is a fixed-position overlay (`translate-x` slide-in) so opening it does not push or reflow the editor canvas.
 - Notes sidebar receives the signed-in user's owned notes as props for now; auth/database-backed loading belongs to a later API/data unit.
+- Project CRUD routes use the existing Project model and the Clerk `userId` as the `ownerId`, with owner-only rename/delete enforcement enforced in the API layer before any mutation.
 
 ## Session Notes
 - This is a deliberate rebuild of an earlier POC for Peacock India. The MD gave a second chance after the CEO flagged that the build was strong but the explanation wasn't. The bar this time is verbal fluency on: the share-link two-step flow, the DB relationships, the JWT fallback fix, and the atomic update pattern - not just a working demo.
