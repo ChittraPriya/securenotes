@@ -3,31 +3,32 @@
 Update this file after every meaningful implementation change.
 
 ## Current Phase
-Editor chrome setup complete.
+Clerk auth pages and route protection scaffolded.
 
 ## Current Goal
-Set up the project skeleton: Next.js App Router + TypeScript, Hono.js mounted as the API layer, Prisma + PostgreSQL connection, shadcn/ui installed and themed per `ui-context.md`.
+Implement Clerk-based sign-in and sign-up pages with a secure auth layout that matches the application's light design system.
 
 ## Completed
-- Design system and UI primitives: shadcn/ui initialized with Radix/Lucide primitives, requested components installed, `lucide-react` installed, shared `cn()` helper added, and shadcn theme variables mapped to the Secure Notes dark-only tokens.
+- Design system and UI primitives: shadcn/ui initialized with Radix/Lucide primitives, requested components installed, `lucide-react` installed, shared `cn()` helper added, and shadcn theme variables mapped to the Secure Notes light theme tokens.
 - Editor chrome scaffolding: added reusable editor navbar, floating notes sidebar, and dialog content pattern per `context/feature-spec/02-editor.md`.
+- Clerk auth pages: added `/login` and `/register` routes using `<SignIn />` and `<SignUp />`, custom Clerk appearance via CSS variables, and `ClerkProvider` in the root layout.
+- Route protection: added root `middleware.ts` to allow unauthenticated access to public auth and share routes.
 
 ## In Progress
-- None yet.
+- Building editor home with project dialogs and sidebar actions.
 
 ## Next Up
-1. Project scaffold (Next.js, TS, Tailwind, shadcn init, Hono mount point).
-2. Prisma schema: `User`, `Note`, `ShareLink` models per `architecture.md`.
-3. Auth: register/login routes, JWT signing with no fallback secret, httpOnly cookie session.
-4. `/notes/new` - note creation form + API route.
-5. Share link generation - token, password/key generation, share/access type selection.
-6. `/share/[token]` - status-check endpoint + atomic consume endpoint.
-7. Revoke link flow.
-8. View count display on `/notes/[id]`.
-9. Edge case pass: invalid/expired/revoked/used/wrong-password states.
-10. Concurrency test: simulate two simultaneous requests to a one-time link.
-11. README write-up (setup, schema, flows, race-condition answers).
-12. Demo video recording.
+1. Prisma schema: `User`, `Note`, `ShareLink` models per `architecture.md`.
+2. Auth: server-side user syncing and protected note routes with Clerk session validation.
+3. `/notes/new` - note creation form + API route.
+4. Share link generation - token, password/key generation, share/access type selection.
+5. `/share/[token]` - status-check endpoint + atomic consume endpoint.
+6. Revoke link flow.
+7. View count display on `/notes/[id]`.
+8. Edge case pass: invalid/expired/revoked/used/wrong-password states.
+9. Concurrency test: simulate two simultaneous requests to a one-time link.
+10. README write-up (setup, schema, flows, race-condition answers).
+11. Demo video recording.
 
 ## Open Questions
 - Password/key generation: confirm length and character set for the dynamic access key (e.g. 8-character alphanumeric vs longer token) - needs a decision in `product-spec.md` before building.

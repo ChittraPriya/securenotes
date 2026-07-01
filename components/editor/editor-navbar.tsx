@@ -1,25 +1,26 @@
-"use client"
+"use client";
 
-import { PanelLeftClose, PanelLeftOpen } from "lucide-react"
-import type { ReactNode } from "react"
+import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import type { ReactNode } from "react";
+import { UserButton } from "@clerk/nextjs";
 
-import { Button } from "@/components/ui/button"
-import { cn } from "@/lib/utils"
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 type EditorNavbarProps = {
-  isSidebarOpen: boolean
-  onToggleSidebar: () => void
-  centerContent?: ReactNode
-  className?: string
-}
+  isSidebarOpen: boolean;
+  onToggleSidebar: () => void;
+  centerContent?: ReactNode;
+  className?: string;
+};
 
-function EditorNavbar({
+export function EditorNavbar({
   isSidebarOpen,
   onToggleSidebar,
   centerContent,
   className,
 }: EditorNavbarProps) {
-  const SidebarIcon = isSidebarOpen ? PanelLeftClose : PanelLeftOpen
+  const SidebarIcon = isSidebarOpen ? PanelLeftClose : PanelLeftOpen;
 
   return (
     <header
@@ -28,27 +29,40 @@ function EditorNavbar({
         className
       )}
     >
-      <div className="flex items-center justify-start">
+      {/* Left */}
+      <div className="flex items-center gap-2">
         <Button
           type="button"
           variant="ghost"
           size="icon"
-          aria-label={isSidebarOpen ? "Close notes sidebar" : "Open notes sidebar"}
+          aria-label={isSidebarOpen ? "Close sidebar" : "Open sidebar"}
           aria-pressed={isSidebarOpen}
           onClick={onToggleSidebar}
         >
           <SidebarIcon className="h-5 w-5" aria-hidden="true" />
         </Button>
+
+        <span className="hidden sm:block text-sm font-semibold">
+          Secure Notes
+        </span>
       </div>
 
-      <div className="min-w-0 text-center text-sm font-medium text-[var(--text-secondary)]">
+      {/* Center */}
+      <div className="min-w-0 text-center text-sm font-medium text-[var(--text-secondary)] hidden md:block">
         {centerContent}
       </div>
 
-      <div className="flex items-center justify-end" aria-hidden="true" />
+      {/* Right */}
+      <div className="flex items-center justify-end">
+        <UserButton
+          afterSignOutUrl="/"
+          appearance={{
+            elements: {
+              avatarBox: "h-9 w-9",
+            },
+          }}
+        />
+      </div>
     </header>
-  )
+  );
 }
-
-export { EditorNavbar }
-export type { EditorNavbarProps }

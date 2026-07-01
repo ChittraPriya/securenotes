@@ -1,97 +1,520 @@
-"use client"
+"use client";
 
-import Link from "next/link"
-import { FileText, PanelLeftClose, Plus } from "lucide-react"
+import { useState } from "react";
+import Link from "next/link";
 
-import { Button } from "@/components/ui/button"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import { cn } from "@/lib/utils"
+import {
+  FileText,
+  PanelLeftClose,
+  Plus,
+  Users,
+  Pencil,
+  Trash2,
+} from "lucide-react";
+
+import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { cn } from "@/lib/utils";
+
 
 type NotesSidebarItem = {
-  id: string
-  title: string
-}
+  id: string;
+  title: string;
+  owned: boolean;
+  sharedBy?: string;
+  members?: number;
+};
+
 
 type NotesSidebarProps = {
-  isOpen: boolean
-  notes?: NotesSidebarItem[]
-  onClose?: () => void
-  className?: string
-}
+  isOpen: boolean;
+  notes?: NotesSidebarItem[];
+  onClose?: () => void;
+  onCreate?: () => void;
+  onRename?: (note: NotesSidebarItem) => void;
+  onDelete?: (note: NotesSidebarItem) => void;
+  className?: string;
+};
+
+
 
 function NotesSidebar({
   isOpen,
   notes = [],
   onClose,
+  onCreate,
+  onRename,
+  onDelete,
   className,
 }: NotesSidebarProps) {
+
+
+  const [activeTab, setActiveTab] = useState<"my" | "shared">("my");
+
+
+  const myNotes = notes.filter(
+    (note) => note.owned
+  );
+
+
+  const sharedNotes = notes.filter(
+    (note) => !note.owned
+  );
+
+
+
   return (
+
     <aside
-      aria-label="My notes"
+      aria-label="Notes sidebar"
       aria-hidden={!isOpen}
       className={cn(
-        "fixed top-14 bottom-0 left-0 z-40 flex w-80 max-w-[calc(100vw-1rem)] flex-col border-r border-[var(--border-default)] bg-[var(--bg-surface)] text-[var(--text-primary)] shadow-xl transition-transform duration-200 ease-out",
-        isOpen ? "translate-x-0" : "pointer-events-none -translate-x-full",
+        `
+        fixed top-14 bottom-0 left-0 z-40
+        flex w-80 max-w-[calc(100vw-1rem)]
+        flex-col
+        border-r border-[var(--border-default)]
+        bg-[var(--bg-surface)]
+        text-[var(--text-primary)]
+        shadow-xl
+        transition-transform duration-200
+        `,
+        isOpen
+          ? "translate-x-0"
+          : "pointer-events-none -translate-x-full",
+
         className
       )}
     >
-      <div className="flex h-14 shrink-0 items-center justify-between border-b border-[var(--border-default)] px-4">
-        <h2 className="text-sm font-semibold">My Notes</h2>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon-sm"
-          aria-label="Close notes sidebar"
-          onClick={onClose}
-        >
-          <PanelLeftClose className="h-4 w-4" aria-hidden="true" />
-        </Button>
+
+
+      {/* Header */}
+
+      <div className="
+      border-b
+      border-[var(--border-default)]
+      px-4
+      py-4
+      ">
+
+
+        <div className="
+        mb-4
+        flex
+        items-center
+        justify-between
+        ">
+
+
+          <h2 className="
+          text-sm
+          font-semibold
+          ">
+            Notes
+          </h2>
+
+
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            onClick={onClose}
+          >
+
+            <PanelLeftClose
+              className="h-4 w-4"
+            />
+
+          </Button>
+
+
+        </div>
+
+
+
+        {/* Tabs */}
+
+        <div className="
+        flex
+        rounded-lg
+        bg-[var(--bg-surface-raised)]
+        p-1
+        ">
+
+
+          <button
+            onClick={() => setActiveTab("my")}
+            className={cn(
+              `
+              flex-1
+              rounded-md
+              py-2
+              text-sm
+              transition
+              `,
+              activeTab === "my"
+              ? "bg-[var(--bg-surface)] font-medium"
+              : "text-[var(--text-secondary)]"
+            )}
+          >
+            My Notes
+          </button>
+
+
+
+          <button
+            onClick={() => setActiveTab("shared")}
+            className={cn(
+              `
+              flex-1
+              rounded-md
+              py-2
+              text-sm
+              transition
+              `,
+              activeTab === "shared"
+              ? "bg-[var(--bg-surface)] font-medium"
+              : "text-[var(--text-secondary)]"
+            )}
+          >
+            Shared
+          </button>
+
+
+        </div>
+
+
       </div>
 
-      <ScrollArea className="min-h-0 flex-1">
-        {notes.length > 0 ? (
-          <nav className="flex flex-col gap-1 p-3" aria-label="Owned notes">
-            {notes.map((note) => (
+
+
+
+
+      {/* Content */}
+
+      <ScrollArea className="
+      flex-1
+      min-h-0
+      ">
+
+
+        <div className="p-3">
+
+
+
+        {/* MY NOTES */}
+
+        {
+          activeTab === "my" && (
+
+          <>
+
+          <h3 className="
+          mb-3
+          text-xs
+          font-medium
+          text-[var(--text-muted)]
+          ">
+            MY NOTES
+          </h3>
+
+
+
+          {
+            myNotes.length > 0 ? (
+
+            myNotes.map((note)=>(
+
+              <div
+                key={note.id}
+                className="
+                group
+                mb-2
+                flex
+                items-center
+                justify-between
+                rounded-md
+                px-3
+                py-2
+                text-sm
+                hover:bg-[var(--bg-surface-raised)]
+                "
+              >
+
+
+                <Link
+                  href={`/notes/${note.id}`}
+                  className="
+                  flex
+                  min-w-0
+                  items-center
+                  gap-2
+                  "
+                >
+
+                  <FileText
+                    className="
+                    h-4
+                    w-4
+                    text-[var(--text-muted)]
+                    "
+                  />
+
+
+                  <span className="truncate">
+                    {note.title}
+                  </span>
+
+
+                </Link>
+
+
+
+                <div className="
+                hidden
+                group-hover:flex
+                gap-1
+                ">
+
+
+                  <button
+                    type="button"
+                    onClick={() => onRename?.(note)}
+                    className="
+                    rounded-md
+                    p-1.5
+                    hover:bg-[var(--bg-surface)]
+                    "
+                  >
+
+                    <Pencil
+                      className="h-4 w-4"
+                    />
+
+                  </button>
+
+
+
+                  <button
+                    type="button"
+                    onClick={() => onDelete?.(note)}
+                    className="
+                    rounded-md
+                    p-1.5
+                    text-red-400
+                    hover:bg-red-500/10
+                    "
+                  >
+
+                    <Trash2
+                      className="h-4 w-4"
+                    />
+
+                  </button>
+
+
+                </div>
+
+
+              </div>
+
+            ))
+
+            ) : (
+
+              <p className="
+              text-sm
+              text-[var(--text-muted)]
+              ">
+                No notes yet
+              </p>
+
+            )
+
+          }
+
+          </>
+
+          )
+        }
+
+
+
+
+
+
+        {/* SHARED NOTES */}
+
+
+        {
+          activeTab === "shared" && (
+
+          <>
+
+          <h3 className="
+          mb-3
+          text-xs
+          font-medium
+          text-[var(--text-muted)]
+          ">
+            SHARED WITH ME
+          </h3>
+
+
+
+          {
+            sharedNotes.length > 0 ? (
+
+            sharedNotes.map((note)=>(
+
               <Link
                 key={note.id}
                 href={`/notes/${note.id}`}
-                className="flex min-h-10 items-center gap-2 rounded-md px-3 py-2 text-sm text-[var(--text-secondary)] transition-colors hover:bg-[var(--bg-surface-raised)] hover:text-[var(--text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-primary)]"
+                className="
+                mb-2
+                flex
+                items-center
+                justify-between
+                rounded-md
+                px-3
+                py-2
+                hover:bg-[var(--bg-surface-raised)]
+                "
               >
-                <FileText
-                  className="h-4 w-4 shrink-0 text-[var(--text-muted)]"
-                  aria-hidden="true"
-                />
-                <span className="min-w-0 truncate">{note.title}</span>
+
+
+                <div className="
+                flex
+                items-center
+                gap-2
+                ">
+
+
+                  <Users
+                    className="
+                    h-4
+                    w-4
+                    text-blue-400
+                    "
+                  />
+
+
+                  <div>
+
+                    <p className="text-sm">
+                      {note.title}
+                    </p>
+
+
+                    <p className="
+                    text-xs
+                    text-[var(--text-muted)]
+                    ">
+                      From: {note.sharedBy}
+                    </p>
+
+                  </div>
+
+
+                </div>
+
+
+
+                {
+                  note.members && (
+
+                  <span className="
+                  rounded
+                  bg-[var(--bg-surface-raised)]
+                  px-2
+                  py-1
+                  text-xs
+                  ">
+                    👥 {note.members}
+                  </span>
+
+                  )
+                }
+
+
               </Link>
-            ))}
-          </nav>
-        ) : (
-          <div className="flex h-full min-h-48 flex-col items-center justify-center gap-2 px-6 text-center">
-            <FileText
-              className="h-6 w-6 text-[var(--text-faint)]"
-              aria-hidden="true"
-            />
-            <p className="text-sm font-medium text-[var(--text-secondary)]">
-              No notes yet
-            </p>
-            <p className="text-xs leading-5 text-[var(--text-muted)]">
-              Create your first secure note to see it here.
-            </p>
-          </div>
-        )}
+
+            ))
+
+            ) : (
+
+              <p className="
+              text-sm
+              text-[var(--text-muted)]
+              ">
+                No shared notes
+              </p>
+
+            )
+
+          }
+
+
+          </>
+
+          )
+        }
+
+
+        </div>
+
+
       </ScrollArea>
 
-      <div className="border-t border-[var(--border-default)] p-3">
-        <Button asChild className="w-full justify-center gap-2">
-          <Link href="/notes/new">
-            <Plus className="h-4 w-4" aria-hidden="true" />
-            New Note
-          </Link>
+
+
+
+
+      {/* New Note */}
+
+      <div className="
+      border-t
+      border-[var(--border-default)]
+      p-3
+      ">
+
+
+        <Button
+          type="button"
+          className="
+          w-full
+          justify-center
+          gap-2
+          "
+          onClick={onCreate}
+        >
+
+          <Plus
+            className="h-4 w-4"
+          />
+
+          New Note
+
         </Button>
+
+
       </div>
+
+
+
     </aside>
-  )
+
+  );
 }
 
-export { NotesSidebar }
-export type { NotesSidebarItem, NotesSidebarProps }
+
+
+export {
+  NotesSidebar
+};
+
+
+export type {
+  NotesSidebarItem,
+  NotesSidebarProps
+};
