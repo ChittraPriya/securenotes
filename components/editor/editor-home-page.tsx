@@ -1,10 +1,10 @@
-"use client"
+"use client";
 
-import { useMemo } from "react"
-import { Plus, FileText } from "lucide-react"
-import { useRouter } from "next/navigation"
+import { useMemo } from "react";
+import { Plus, FileText } from "lucide-react";
+import { useRouter } from "next/navigation";
 
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -12,22 +12,27 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { EditorNavbar } from "@/components/editor/editor-navbar"
-import { NotesSidebar } from "@/components/editor/notes-sidebar"
-import { useProjectActions } from "@/hooks/use-project-actions"
-import type { EditorProjectSummary } from "@/lib/notes"
-import { cn } from "@/lib/utils"
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { EditorNavbar } from "@/components/editor/editor-navbar";
+import { NotesSidebar } from "@/components/editor/notes-sidebar";
+import { useProjectActions } from "@/hooks/use-project-actions";
+import type { EditorProjectSummary } from "@/lib/notes";
+import { cn } from "@/lib/utils";
+import { useState } from "react";
 
 type EditorHomePageProps = {
-  ownedProjects: EditorProjectSummary[]
-  sharedProjects: EditorProjectSummary[]
-}
+  ownedProjects: EditorProjectSummary[];
+  sharedProjects: EditorProjectSummary[];
+};
 
-export function EditorHomePage({ ownedProjects, sharedProjects }: EditorHomePageProps) {
-  const router = useRouter()
+export function EditorHomePage({
+  ownedProjects,
+  sharedProjects,
+}: EditorHomePageProps) {
+  const router = useRouter();
+  const [content, setContent] = useState("")
   const {
     ownedProjects: ownedProjectsState,
     sharedProjects: sharedProjectsState,
@@ -47,11 +52,20 @@ export function EditorHomePage({ ownedProjects, sharedProjects }: EditorHomePage
     createProject,
     renameProject,
     deleteProject,
-  } = useProjectActions(ownedProjects, sharedProjects)
+  } = useProjectActions(ownedProjects, sharedProjects);
 
-  const createButtonLabel = useMemo(() => (loading ? "Creating…" : "Create note"), [loading])
-  const renameButtonLabel = useMemo(() => (loading ? "Saving…" : "Save changes"), [loading])
-  const deleteButtonLabel = useMemo(() => (loading ? "Deleting…" : "Delete note"), [loading])
+  const createButtonLabel = useMemo(
+    () => (loading ? "Creating…" : "Create note"),
+    [loading],
+  );
+  const renameButtonLabel = useMemo(
+    () => (loading ? "Saving…" : "Save changes"),
+    [loading],
+  );
+  const deleteButtonLabel = useMemo(
+    () => (loading ? "Deleting…" : "Delete note"),
+    [loading],
+  );
 
   return (
     <div className="min-h-screen bg-bg-base text-text-primary">
@@ -62,7 +76,10 @@ export function EditorHomePage({ ownedProjects, sharedProjects }: EditorHomePage
       />
 
       {isSidebarOpen ? (
-        <div className="fixed inset-0 z-30 bg-black/20 md:hidden" onClick={closeSidebar} />
+        <div
+          className="fixed inset-0 z-30 bg-black/20 md:hidden"
+          onClick={closeSidebar}
+        />
       ) : null}
 
       <div className="relative md:flex md:items-start">
@@ -94,7 +111,8 @@ export function EditorHomePage({ ownedProjects, sharedProjects }: EditorHomePage
             </h1>
 
             <p className="max-w-2xl text-sm leading-7 text-text-secondary">
-              Start a new architecture workspace, or choose a project from the sidebar.
+              Start a new architecture workspace, or choose a project from the
+              sidebar.
             </p>
 
             <div className="mt-10">
@@ -107,7 +125,10 @@ export function EditorHomePage({ ownedProjects, sharedProjects }: EditorHomePage
         </main>
       </div>
 
-      <Dialog open={dialog === "create"} onOpenChange={(isOpen) => !isOpen && closeDialog()}>
+      <Dialog
+        open={dialog === "create"}
+        onOpenChange={(isOpen) => !isOpen && closeDialog()}
+      >
         <DialogContent className="w-full max-w-lg">
           <DialogHeader>
             <DialogTitle>Create note</DialogTitle>
@@ -119,31 +140,47 @@ export function EditorHomePage({ ownedProjects, sharedProjects }: EditorHomePage
           <form
             className="grid gap-4"
             onSubmit={(event) => {
-              event.preventDefault()
-              void createProject().then((result) => {
+              event.preventDefault();
+              void createProject(content).then((result) => {
                 if (result?.redirectTo) {
-                  router.push(result.redirectTo)
+                  router.push(result.redirectTo);
                 }
-              })
+              });
             }}
           >
-            <div className="grid gap-2">
-              <Label htmlFor="note-name">Note name</Label>
-              <Input
-                id="note-name"
-                autoFocus
-                value={nameInput}
-                onChange={(event) => setNameInput(event.target.value)}
-                placeholder="My architecture note"
-                disabled={loading}
-              />
-              <p className="text-sm text-text-secondary">
-                Room ID preview: <span className="font-mono text-text-primary">{roomIdPreview}</span>
-              </p>
-            </div>
+            <div className="grid gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="note-name">Title</Label>
 
+                <Input
+                  id="note-name"
+                  autoFocus
+                  value={nameInput}
+                  onChange={(event) => setNameInput(event.target.value)}
+                  placeholder="My architecture note"
+                  disabled={loading}
+                />
+              </div>
+
+              <div className="grid gap-2">
+                <Label>Content</Label>
+
+                <textarea
+                  className="min-h-32 rounded-md border p-3"
+                  placeholder="Write your note content..."
+                  value={content}
+                  onChange={(e) => setContent(e.target.value)}
+                  disabled={loading}
+                />
+              </div>
+            </div>
             <DialogFooter className="flex flex-col gap-2 sm:flex-row sm:justify-end">
-              <Button type="button" variant="outline" onClick={closeDialog} disabled={loading}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={closeDialog}
+                disabled={loading}
+              >
                 Cancel
               </Button>
               <Button type="submit" disabled={loading}>
@@ -154,20 +191,24 @@ export function EditorHomePage({ ownedProjects, sharedProjects }: EditorHomePage
         </DialogContent>
       </Dialog>
 
-      <Dialog open={dialog === "rename"} onOpenChange={(isOpen) => !isOpen && closeDialog()}>
+      <Dialog
+        open={dialog === "rename"}
+        onOpenChange={(isOpen) => !isOpen && closeDialog()}
+      >
         <DialogContent className="w-full max-w-lg">
           <DialogHeader>
             <DialogTitle>Rename note</DialogTitle>
             <DialogDescription>
-              Rename the workspace titled “{activeProject?.title}”. Press Enter to submit.
+              Rename the workspace titled “{activeProject?.title}”. Press Enter
+              to submit.
             </DialogDescription>
           </DialogHeader>
 
           <form
             className="grid gap-4"
             onSubmit={(event) => {
-              event.preventDefault()
-              void renameProject()
+              event.preventDefault();
+              void renameProject();
             }}
           >
             <div className="grid gap-2">
@@ -182,7 +223,12 @@ export function EditorHomePage({ ownedProjects, sharedProjects }: EditorHomePage
             </div>
 
             <DialogFooter className="flex flex-col gap-2 sm:flex-row sm:justify-end">
-              <Button type="button" variant="outline" onClick={closeDialog} disabled={loading}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={closeDialog}
+                disabled={loading}
+              >
                 Cancel
               </Button>
               <Button type="submit" disabled={loading}>
@@ -193,7 +239,10 @@ export function EditorHomePage({ ownedProjects, sharedProjects }: EditorHomePage
         </DialogContent>
       </Dialog>
 
-      <Dialog open={dialog === "delete"} onOpenChange={(isOpen) => !isOpen && closeDialog()}>
+      <Dialog
+        open={dialog === "delete"}
+        onOpenChange={(isOpen) => !isOpen && closeDialog()}
+      >
         <DialogContent className="w-full max-w-lg">
           <DialogHeader>
             <DialogTitle>Delete note</DialogTitle>
@@ -204,13 +253,24 @@ export function EditorHomePage({ ownedProjects, sharedProjects }: EditorHomePage
 
           <div className="grid gap-4">
             <p className="text-sm text-text-secondary">
-              Are you sure you want to delete this note? This action cannot be reversed.
+              Are you sure you want to delete this note? This action cannot be
+              reversed.
             </p>
             <DialogFooter className="flex flex-col gap-2 sm:flex-row sm:justify-end">
-              <Button type="button" variant="outline" onClick={closeDialog} disabled={loading}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={closeDialog}
+                disabled={loading}
+              >
                 Cancel
               </Button>
-              <Button type="button" variant="destructive" onClick={() => void deleteProject()} disabled={loading}>
+              <Button
+                type="button"
+                variant="destructive"
+                onClick={() => void deleteProject()}
+                disabled={loading}
+              >
                 {deleteButtonLabel}
               </Button>
             </DialogFooter>
@@ -218,5 +278,5 @@ export function EditorHomePage({ ownedProjects, sharedProjects }: EditorHomePage
         </DialogContent>
       </Dialog>
     </div>
-  )
+  );
 }

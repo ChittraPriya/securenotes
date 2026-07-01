@@ -3,35 +3,29 @@
 Update this file after every meaningful implementation change.
 
 ## Current Phase
-Editor home sidebar and dialogs are now wired to the real project API and server-fetched project data.
+The workspace-sharing flow is now implemented for the existing notes workspace, including share generation, password-protected access, revocation, and a dedicated public share view.
 
 ## Current Goal
-Complete editor-home project CRUD flows, workspace navigation, and verify the build.
+Verify the build end to end and record the completed sharing work.
 
 ## Completed
 - Design system and UI primitives: shadcn/ui initialized with Radix/Lucide primitives, requested components installed, `lucide-react` installed, shared `cn()` helper added, and shadcn theme variables mapped to the Secure Notes light theme tokens.
 - Editor chrome scaffolding: added reusable editor navbar, floating notes sidebar, and dialog content pattern per `context/feature-spec/02-editor.md`.
 - Clerk auth pages: added `/login` and `/register` routes using `<SignIn />` and `<SignUp />`, custom Clerk appearance via CSS variables, and `ClerkProvider` in the root layout.
 - Route protection: added root `middleware.ts` to allow unauthenticated access to public auth and share routes.
-- Prisma models & client: added `prisma/models/notes.prisma`, duplicated models in `prisma/schema.prisma` for CLI compatibility, and exported a cached Prisma client at `lib/prisma.ts`. Migration applied and Prisma client generated; `npm run build` verified.
+- Prisma models & client: added `prisma/models/notes.prisma`, duplicated models in `prisma/schema.prisma` for CLI compatibility, and exported a cached Prisma client at `lib/prisma.ts`. The share-link schema and migration were applied successfully.
 - Backend notes/project API routes: added `GET /api/notes`, `POST /api/notes`, `PATCH /api/notes/[notesId]`, and `DELETE /api/notes/[notesId]` using the authenticated Clerk user ID as `ownerId`, defaulting new records to `Untitled Project`, returning `401` for unauthenticated requests, and returning `403` for non-owner rename/delete attempts.
 - Editor home API wiring: the editor home page now fetches owned/shared projects server-side, passes them into the sidebar, and uses a project actions hook to create, rename, and delete projects through the real API with dialog state and workspace navigation.
+- Editor workspace shell: added a server-rendered workspace route at `/editor/[id]` with reusable access helpers, an `AccessDenied` component for unauthorized or missing projects, and a full-viewport shell featuring the project title navbar, room sidebar, central canvas placeholder, and future AI sidebar placeholder.
+- Workspace sharing: added `POST /api/share`, `GET /api/share/[token]`, `POST /api/share/[token]/unlock`, and `PATCH /api/share/[token]/revoke`; wired sharing controls into the existing notes workspace; added a share page at `/share/[token]` supporting public and password-protected access with revocation and view counting.
 
 ## In Progress
-- Building editor home with project dialogs and sidebar actions.
+- Final build verification and follow-up polish.
 
 ## Next Up
-1. Prisma schema: `User`, `Note`, `ShareLink` models per `architecture.md`.
-2. Auth: server-side user syncing and protected note routes with Clerk session validation.
-3. `/notes/new` - note creation form + API route.
-4. Share link generation - token, password/key generation, share/access type selection.
-5. `/share/[token]` - status-check endpoint + atomic consume endpoint.
-6. Revoke link flow.
-7. View count display on `/notes/[id]`.
-8. Edge case pass: invalid/expired/revoked/used/wrong-password states.
-9. Concurrency test: simulate two simultaneous requests to a one-time link.
-10. README write-up (setup, schema, flows, race-condition answers).
-11. Demo video recording.
+1. README write-up (setup, schema, flows, race-condition answers).
+2. Demo video recording.
+3. Optional hardening pass for rate limiting and more polished share UX.
 
 ## Open Questions
 - Password/key generation: confirm length and character set for the dynamic access key (e.g. 8-character alphanumeric vs longer token) - needs a decision in `product-spec.md` before building.

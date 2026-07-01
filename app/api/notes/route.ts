@@ -8,6 +8,7 @@ function getProjectSelection() {
     id: true,
     name: true,
     description: true,
+    content: true,
     status: true,
     canvasIsonPath: true,
     createdAt: true,
@@ -53,12 +54,14 @@ export async function POST(request: Request) {
 
   const name = typeof rawName === 'string' && rawName.trim() !== '' ? rawName.trim() : 'Untitled Project'
   const description = typeof rawDescription === 'string' ? rawDescription : null
+  const content = typeof parsedBody.content === 'string' ? parsedBody.content : null
 
   const project = await prisma.project.create({
     data: {
       ownerId: userId,
       name,
       description,
+      content,
     },
     select: getProjectSelection(),
   })

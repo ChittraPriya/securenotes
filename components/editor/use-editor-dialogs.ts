@@ -61,20 +61,44 @@ export function useEditorDialogs(initialNotes: EditorNote[] = []) {
   const toggleSidebar = () => setIsSidebarOpen((current) => !current)
 
   const createNote = async () => {
-    if (!nameInput.trim()) return
-    setLoading(true)
-    await new Promise((resolve) => setTimeout(resolve, 250))
+  if (!nameInput.trim()) return;
+
+  setLoading(true);
+
+  try {
+    const response = await fetch("/api/notes", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        name: nameInput.trim(),
+        content: "",
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to create note");
+    }
+
+    const createdNote = await response.json();
+
     setNotes((currentNotes) => [
       ...currentNotes,
       {
-        id: `note-${Date.now()}`,
-        title: nameInput.trim(),
+        id: createdNote.id,
+        title: createdNote.name,
         owned: true,
       },
-    ])
-    closeDialog()
-  }
+    ]);
 
+    closeDialog();
+  } catch (error) {
+    console.error("Create note error:", error);
+  } finally {
+    setLoading(false);
+  }
+};
   const renameNote = async () => {
     if (!activeNote || !nameInput.trim()) return
     setLoading(true)

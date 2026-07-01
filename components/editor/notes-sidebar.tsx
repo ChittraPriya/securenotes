@@ -50,9 +50,15 @@ function NotesSidebar({
 }: NotesSidebarProps) {
   const [activeTab, setActiveTab] = useState<"my" | "shared">("my");
 
-  const myNotes = ownedProjects.length > 0 ? ownedProjects : notes.filter((note) => note.owned);
+  const myNotes =
+    ownedProjects.length > 0
+      ? ownedProjects
+      : notes.filter((note) => note.owned);
 
-  const sharedNotes = sharedProjects.length > 0 ? sharedProjects : notes.filter((note) => !note.owned);
+  const sharedNotes =
+    sharedProjects.length > 0
+      ? sharedProjects
+      : notes.filter((note) => !note.owned);
 
   return (
     <aside

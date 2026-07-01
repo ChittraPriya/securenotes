@@ -1,0 +1,61 @@
+model Project {
+  id             String                @id @default(cuid())
+  ownerId        String
+  name           String
+  description    String?
+  status         ProjectStatus         @default(DRAFT)
+  canvasIsonPath String?
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
+  content        String?
+  notes          Note[]
+  collaborators  ProjectCollaborator[]
+  shareLinks     ShareLink[]
+
+  @@index([ownerId])
+  @@index([createdAt])
+}
+
+model ProjectCollaborator {
+  id                String   @id @default(cuid())
+  projectId         String
+  collaboratorEmail String
+  createdAt         DateTime @default(now())
+  project           Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, collaboratorEmail])
+  @@index([collaboratorEmail])
+}
+
+model ShareLink {
+  id           String     @id @default(cuid())
+  token        String     @unique
+  projectId    String
+  shareType    ShareType
+  accessType   AccessType
+  passwordHash String?
+  expiryAt     DateTime?
+  viewCount    Int        @default(0)
+  usedAt       DateTime?
+  revokedAt    DateTime?
+  createdAt    DateTime   @default(now())
+  project      Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@index([token])
+}
+
+enum ProjectStatus {
+  DRAFT
+  ARCHIVED
+}
+
+enum ShareType {
+  ONE_TIME
+  TIME_BASED
+}
+
+enum AccessType {
+  PUBLIC
+  PASSWORD
+}
