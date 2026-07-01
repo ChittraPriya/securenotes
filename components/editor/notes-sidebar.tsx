@@ -10,12 +10,12 @@ import {
   Users,
   Pencil,
   Trash2,
+  X,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
-
 
 type NotesSidebarItem = {
   id: string;
@@ -24,7 +24,6 @@ type NotesSidebarItem = {
   sharedBy?: string;
   members?: number;
 };
-
 
 type NotesSidebarProps = {
   isOpen: boolean;
@@ -36,8 +35,6 @@ type NotesSidebarProps = {
   className?: string;
 };
 
-
-
 function NotesSidebar({
   isOpen,
   notes = [],
@@ -47,24 +44,13 @@ function NotesSidebar({
   onDelete,
   className,
 }: NotesSidebarProps) {
-
-
   const [activeTab, setActiveTab] = useState<"my" | "shared">("my");
 
+  const myNotes = notes.filter((note) => note.owned);
 
-  const myNotes = notes.filter(
-    (note) => note.owned
-  );
-
-
-  const sharedNotes = notes.filter(
-    (note) => !note.owned
-  );
-
-
+  const sharedNotes = notes.filter((note) => !note.owned);
 
   return (
-
     <aside
       aria-label="Notes sidebar"
       aria-hidden={!isOpen}
@@ -79,40 +65,37 @@ function NotesSidebar({
         shadow-xl
         transition-transform duration-200
         `,
-        isOpen
-          ? "translate-x-0"
-          : "pointer-events-none -translate-x-full",
+        isOpen ? "translate-x-0" : "pointer-events-none -translate-x-full",
 
-        className
+        className,
       )}
     >
-
-
       {/* Header */}
 
-      <div className="
+      <div
+        className="
       border-b
       border-[var(--border-default)]
       px-4
       py-4
-      ">
-
-
-        <div className="
+      "
+      >
+        <div
+          className="
         mb-4
         flex
         items-center
         justify-between
-        ">
-
-
-          <h2 className="
+        "
+        >
+          <h2
+            className="
           text-sm
           font-semibold
-          ">
+          "
+          >
             Notes
           </h2>
-
 
           <Button
             type="button"
@@ -120,28 +103,20 @@ function NotesSidebar({
             size="icon-sm"
             onClick={onClose}
           >
-
-            <PanelLeftClose
-              className="h-4 w-4"
-            />
-
+            <X className="h-4 w-4" />
           </Button>
-
-
         </div>
-
-
 
         {/* Tabs */}
 
-        <div className="
+        <div
+          className="
         flex
         rounded-lg
         bg-[var(--bg-surface-raised)]
         p-1
-        ">
-
-
+        "
+        >
           <button
             onClick={() => setActiveTab("my")}
             className={cn(
@@ -153,14 +128,12 @@ function NotesSidebar({
               transition
               `,
               activeTab === "my"
-              ? "bg-[var(--bg-surface)] font-medium"
-              : "text-[var(--text-secondary)]"
+                ? "bg-[var(--bg-surface)] font-medium"
+                : "text-[var(--text-secondary)]",
             )}
           >
             My Notes
           </button>
-
-
 
           <button
             onClick={() => setActiveTab("shared")}
@@ -173,61 +146,44 @@ function NotesSidebar({
               transition
               `,
               activeTab === "shared"
-              ? "bg-[var(--bg-surface)] font-medium"
-              : "text-[var(--text-secondary)]"
+                ? "bg-[var(--bg-surface)] font-medium"
+                : "text-[var(--text-secondary)]",
             )}
           >
             Shared
           </button>
-
-
         </div>
-
-
       </div>
-
-
-
-
 
       {/* Content */}
 
-      <ScrollArea className="
+      <ScrollArea
+        className="
       flex-1
       min-h-0
-      ">
-
-
+      "
+      >
         <div className="p-3">
+          {/* MY NOTES */}
 
-
-
-        {/* MY NOTES */}
-
-        {
-          activeTab === "my" && (
-
-          <>
-
-          <h3 className="
+          {activeTab === "my" && (
+            <>
+              <h3
+                className="
           mb-3
           text-xs
           font-medium
           text-[var(--text-muted)]
-          ">
-            MY NOTES
-          </h3>
+          "
+              >
+                MY NOTES
+              </h3>
 
-
-
-          {
-            myNotes.length > 0 ? (
-
-            myNotes.map((note)=>(
-
-              <div
-                key={note.id}
-                className="
+              {myNotes.length > 0 ? (
+                myNotes.map((note) => (
+                  <div
+                    key={note.id}
+                    className="
                 group
                 mb-2
                 flex
@@ -239,138 +195,95 @@ function NotesSidebar({
                 text-sm
                 hover:bg-[var(--bg-surface-raised)]
                 "
-              >
-
-
-                <Link
-                  href={`/notes/${note.id}`}
-                  className="
+                  >
+                    <Link
+                      href={`/notes/${note.id}`}
+                      className="
                   flex
                   min-w-0
                   items-center
                   gap-2
                   "
-                >
-
-                  <FileText
-                    className="
+                    >
+                      <FileText
+                        className="
                     h-4
                     w-4
                     text-[var(--text-muted)]
                     "
-                  />
+                      />
 
+                      <span className="truncate">{note.title}</span>
+                    </Link>
 
-                  <span className="truncate">
-                    {note.title}
-                  </span>
-
-
-                </Link>
-
-
-
-                <div className="
+                    <div
+                      className="
                 hidden
                 group-hover:flex
                 gap-1
-                ">
-
-
-                  <button
-                    type="button"
-                    onClick={() => onRename?.(note)}
-                    className="
+                "
+                    >
+                      <button
+                        type="button"
+                        onClick={() => onRename?.(note)}
+                        className="
                     rounded-md
                     p-1.5
                     hover:bg-[var(--bg-surface)]
                     "
-                  >
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </button>
 
-                    <Pencil
-                      className="h-4 w-4"
-                    />
-
-                  </button>
-
-
-
-                  <button
-                    type="button"
-                    onClick={() => onDelete?.(note)}
-                    className="
+                      <button
+                        type="button"
+                        onClick={() => onDelete?.(note)}
+                        className="
                     rounded-md
                     p-1.5
                     text-red-400
                     hover:bg-red-500/10
                     "
-                  >
-
-                    <Trash2
-                      className="h-4 w-4"
-                    />
-
-                  </button>
-
-
-                </div>
-
-
-              </div>
-
-            ))
-
-            ) : (
-
-              <p className="
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <p
+                  className="
               text-sm
               text-[var(--text-muted)]
-              ">
-                No notes yet
-              </p>
+              "
+                >
+                  No notes yet
+                </p>
+              )}
+            </>
+          )}
 
-            )
+          {/* SHARED NOTES */}
 
-          }
-
-          </>
-
-          )
-        }
-
-
-
-
-
-
-        {/* SHARED NOTES */}
-
-
-        {
-          activeTab === "shared" && (
-
-          <>
-
-          <h3 className="
+          {activeTab === "shared" && (
+            <>
+              <h3
+                className="
           mb-3
           text-xs
           font-medium
           text-[var(--text-muted)]
-          ">
-            SHARED WITH ME
-          </h3>
+          "
+              >
+                SHARED WITH ME
+              </h3>
 
-
-
-          {
-            sharedNotes.length > 0 ? (
-
-            sharedNotes.map((note)=>(
-
-              <Link
-                key={note.id}
-                href={`/notes/${note.id}`}
-                className="
+              {sharedNotes.length > 0 ? (
+                sharedNotes.map((note) => (
+                  <Link
+                    key={note.id}
+                    href={`/notes/${note.id}`}
+                    className="
                 mb-2
                 flex
                 items-center
@@ -380,105 +293,75 @@ function NotesSidebar({
                 py-2
                 hover:bg-[var(--bg-surface-raised)]
                 "
-              >
-
-
-                <div className="
+                  >
+                    <div
+                      className="
                 flex
                 items-center
                 gap-2
-                ">
-
-
-                  <Users
-                    className="
+                "
+                    >
+                      <Users
+                        className="
                     h-4
                     w-4
                     text-blue-400
                     "
-                  />
+                      />
 
+                      <div>
+                        <p className="text-sm">{note.title}</p>
 
-                  <div>
-
-                    <p className="text-sm">
-                      {note.title}
-                    </p>
-
-
-                    <p className="
+                        <p
+                          className="
                     text-xs
                     text-[var(--text-muted)]
-                    ">
-                      From: {note.sharedBy}
-                    </p>
+                    "
+                        >
+                          From: {note.sharedBy}
+                        </p>
+                      </div>
+                    </div>
 
-                  </div>
-
-
-                </div>
-
-
-
-                {
-                  note.members && (
-
-                  <span className="
+                    {note.members && (
+                      <span
+                        className="
                   rounded
                   bg-[var(--bg-surface-raised)]
                   px-2
                   py-1
                   text-xs
-                  ">
-                    👥 {note.members}
-                  </span>
-
-                  )
-                }
-
-
-              </Link>
-
-            ))
-
-            ) : (
-
-              <p className="
+                  "
+                      >
+                        👥 {note.members}
+                      </span>
+                    )}
+                  </Link>
+                ))
+              ) : (
+                <p
+                  className="
               text-sm
               text-[var(--text-muted)]
-              ">
-                No shared notes
-              </p>
-
-            )
-
-          }
-
-
-          </>
-
-          )
-        }
-
-
+              "
+                >
+                  No shared notes
+                </p>
+              )}
+            </>
+          )}
         </div>
-
-
       </ScrollArea>
-
-
-
-
 
       {/* New Note */}
 
-      <div className="
+      <div
+        className="
       border-t
       border-[var(--border-default)]
       p-3
-      ">
-
-
+      "
+      >
         <Button
           type="button"
           className="
@@ -488,33 +371,14 @@ function NotesSidebar({
           "
           onClick={onCreate}
         >
-
-          <Plus
-            className="h-4 w-4"
-          />
-
+          <Plus className="h-4 w-4" />
           New Note
-
         </Button>
-
-
       </div>
-
-
-
     </aside>
-
   );
 }
 
+export { NotesSidebar };
 
-
-export {
-  NotesSidebar
-};
-
-
-export type {
-  NotesSidebarItem,
-  NotesSidebarProps
-};
+export type { NotesSidebarItem, NotesSidebarProps };

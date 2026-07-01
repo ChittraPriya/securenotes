@@ -14,6 +14,8 @@ Implement Clerk-based sign-in and sign-up pages with a secure auth layout that m
 - Clerk auth pages: added `/login` and `/register` routes using `<SignIn />` and `<SignUp />`, custom Clerk appearance via CSS variables, and `ClerkProvider` in the root layout.
 - Route protection: added root `middleware.ts` to allow unauthenticated access to public auth and share routes.
 
+ - Prisma models & client: added `prisma/models/notes.prisma`, duplicated models in `prisma/schema.prisma` for CLI compatibility, and exported a cached Prisma client at `lib/prisma.ts`. Migration applied and Prisma client generated; `npm run build` verified.
+
 ## In Progress
 - Building editor home with project dialogs and sidebar actions.
 

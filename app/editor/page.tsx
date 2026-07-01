@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label"
 import { EditorNavbar } from "@/components/editor/editor-navbar"
 import { NotesSidebar } from "@/components/editor/notes-sidebar"
 import { useEditorDialogs } from "@/components/editor/use-editor-dialogs"
+import { cn } from "@/lib/utils";
 
 const initialNotes = [
   { id: "note-1", title: "Architecture review notes", owned: true },
@@ -62,26 +63,52 @@ export default function EditorPage() {
           className="md:sticky md:top-14 md:h-[calc(100vh-3.5rem)]"
         />
 
-        <main className="flex-1 px-6 py-10 md:pl-[20rem]">
-          <section className="mx-auto max-w-3xl">
-            <p className="mb-4 inline-flex items-center gap-2 rounded-full bg-bg-surface px-3 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-accent-primary">
-              <FileText className="h-4 w-4" aria-hidden="true" />
-              Editor home
-            </p>
-            <h1 className="mb-4 text-3xl font-semibold leading-tight">
-              Create a note or open an existing one
-            </h1>
-            <p className="max-w-2xl text-sm leading-7 text-text-secondary">
-              Start a new architecture workspace, or choose a project from the sidebar.
-            </p>
-            <div className="mt-10">
-              <Button onClick={openCreateDialog} size="lg">
-                <Plus className="h-4 w-4" aria-hidden="true" />
-                New Note
-              </Button>
-            </div>
-          </section>
-        </main>
+        <main
+  className={cn(
+    "flex-1 px-6 py-10 transition-all duration-300",
+    isSidebarOpen
+      ? "md:pl-[20rem]"
+      : "md:pl-6"
+  )}
+>
+  <section className="mx-auto max-w-3xl">
+
+    <p className="mb-4 inline-flex items-center gap-2 rounded-full bg-bg-surface px-3 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-accent-primary">
+      <FileText
+        className="h-4 w-4"
+        aria-hidden="true"
+      />
+      Editor home
+    </p>
+
+
+    <h1 className="mb-4 text-3xl font-semibold leading-tight">
+      Create a note or open an existing one
+    </h1>
+
+
+    <p className="max-w-2xl text-sm leading-7 text-text-secondary">
+      Start a new architecture workspace, or choose a project from the sidebar.
+    </p>
+
+
+    <div className="mt-10">
+      <Button
+        onClick={openCreateDialog}
+        size="lg"
+      >
+        <Plus
+          className="h-4 w-4"
+          aria-hidden="true"
+        />
+
+        New Note
+      </Button>
+    </div>
+
+
+  </section>
+</main>
       </div>
 
       <Dialog open={dialog === "create"} onOpenChange={(isOpen) => !isOpen && closeDialog()}>

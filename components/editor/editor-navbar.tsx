@@ -55,7 +55,6 @@ export function EditorNavbar({
       {/* Right */}
       <div className="flex items-center justify-end">
         <UserButton
-          afterSignOutUrl="/"
           appearance={{
             elements: {
               avatarBox: "h-9 w-9",
