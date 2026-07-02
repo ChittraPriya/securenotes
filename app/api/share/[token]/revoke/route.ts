@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import { auth } from "@clerk/nextjs/server"; 
+
 import { revokeShareLink } from "@/lib/share-link";
 
 export async function PATCH(
@@ -6,7 +8,7 @@ export async function PATCH(
   { params }: { params: Promise<{ token: string }> }
 ) {
   try {
-    const { token } = await params; // ✅ IMPORTANT FIX
+    const { token } = await params;
 
     if (!token) {
       return NextResponse.json(
@@ -15,7 +17,17 @@ export async function PATCH(
       );
     }
 
-    const result = await revokeShareLink(token);
+    const { userId } = await auth();
+
+    
+    if (!userId) {
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
+
+    const result = await revokeShareLink(token, userId);
 
     if (result.kind === "not_found") {
       return NextResponse.json(

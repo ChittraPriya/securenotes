@@ -1,6 +1,6 @@
 model Project {
   id             String                @id @default(cuid())
-  ownerId        String
+  userId        String
   name           String
   description    String?
   status         ProjectStatus         @default(DRAFT)

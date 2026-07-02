@@ -1,10 +1,12 @@
 import { NextResponse } from 'next/server'
 
-import { getShareLinkAccess } from '@/lib/share-link'
+import { getShareLinkStatus } from '@/lib/share-link'
 
-export async function GET(_request: Request, { params }: { params: { token: string } }) {
+export async function GET( _request: Request,
+   { params }: { params: Promise<{ token: string }> }
+  ) {
   const { token } = await params
-  const result = await getShareLinkAccess(token)
+  const result = await getShareLinkStatus(token)
 
   switch (result.kind) {
     case 'ok':

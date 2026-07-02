@@ -69,7 +69,60 @@ export async function createShareLink(options: {
   }
 }
 
-export async function getShareLinkAccess(token: string, options?: { password?: string | null }) {
+export async function getShareLinkStatus(token: string) {
+  const shareLink = await prisma.shareLink.findUnique({
+    where: { token },
+    include: {
+      project: {
+        select: {
+          id: true,
+          name: true,
+          description: true,
+          content: true,
+        },
+      },
+    },
+  });
+
+  if (!shareLink) {
+    return { kind: "not_found" as const };
+  }
+
+  if (shareLink.revokedAt) {
+    return { kind: "revoked" as const, shareLink };
+  }
+
+  if (
+    shareLink.shareType === "ONE_TIME" &&
+    shareLink.usedAt
+  ) {
+    return { kind: "used" as const, shareLink };
+  }
+
+  if (
+    shareLink.expiryAt &&
+    new Date() > shareLink.expiryAt
+  ) {
+    return { kind: "expired" as const, shareLink };
+  }
+
+
+  if (shareLink.accessType === "PASSWORD") {
+    return {
+      kind: "password_required" as const,
+      shareLink,
+    };
+  }
+
+
+  return {
+    kind: "ok" as const,
+    project: shareLink.project,
+    shareLink,
+  };
+}
+
+export async function consumeShareLink(token: string, options?: { password?: string | null }) {
   const now = new Date()
 
   const result = await prisma.$transaction(async (tx) => {
@@ -145,24 +198,40 @@ export async function getShareLinkAccess(token: string, options?: { password?: s
   return result
 }
 
-export async function revokeShareLink(token: string) {
+export async function revokeShareLink(token: string, userId: string) {
   const shareLink = await prisma.shareLink.findUnique({
-    where: { token },
-    select: { id: true, revokedAt: true },
-  })
+  where: { token },
+  select: {
+    id: true,
+    revokedAt: true,
+    project: {
+      select: {
+        ownerId: true,
+      },
+    },
+  },
+})
 
+ 
   if (!shareLink) {
-    return { kind: 'not_found' as const }
+    return { kind: "not_found" as const }
+  }
+
+  // Check project owner
+  if (shareLink.project.ownerId !== userId) {
+    return { kind: "not_found" as const }
   }
 
   if (shareLink.revokedAt) {
-    return { kind: 'already_revoked' as const }
+    return { kind: "already_revoked" as const }
   }
 
   await prisma.shareLink.update({
     where: { id: shareLink.id },
-    data: { revokedAt: new Date() },
+    data: {
+      revokedAt: new Date(),
+    },
   })
 
-  return { kind: 'revoked' as const }
+  return { kind: "revoked" as const }
 }

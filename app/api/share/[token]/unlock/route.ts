@@ -1,8 +1,10 @@
 import { NextResponse } from 'next/server'
 
-import { getShareLinkAccess } from '@/lib/share-link'
+import { consumeShareLink } from '@/lib/share-link'
 
-export async function POST(request: Request, { params }: { params: { token: string } }) {
+export async function POST(request: Request, 
+  { params }: { params: Promise<{ token: string }> }
+) {
   const { token } = await params
   let body: unknown
 
@@ -19,7 +21,7 @@ export async function POST(request: Request, { params }: { params: { token: stri
     return NextResponse.json({ error: 'password is required' }, { status: 400 })
   }
 
-  const result = await getShareLinkAccess(token, { password: rawPassword })
+  const result = await consumeShareLink(token, { password: rawPassword })
 
   switch (result.kind) {
     case 'ok':
