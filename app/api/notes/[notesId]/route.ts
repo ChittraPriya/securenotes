@@ -1,6 +1,7 @@
 import { auth } from "@clerk/nextjs/server"
 import { NextResponse } from "next/server"
 import prisma from "@/lib/prisma"
+import { updateNoteSchema } from "@/lib/schemas"
 
 export async function PATCH(
   request: Request,
@@ -18,7 +19,24 @@ export async function PATCH(
 
     const { notesId } = await params;
 
-    const body = await request.json();
+    let body: unknown;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json(
+        { error: "Invalid JSON body" },
+        { status: 400 }
+      );
+    }
+
+    const parsed = updateNoteSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: parsed.error.issues[0]?.message ?? "Invalid input" },
+        { status: 400 }
+      );
+    }
+    const input = parsed.data;
 
     const project = await prisma.project.findUnique({
       where: {
@@ -40,19 +58,15 @@ export async function PATCH(
       );
     }
 
+    const updateData: Record<string, string> = {};
+    if (input.name !== undefined) updateData.name = input.name;
+    if (input.content !== undefined) updateData.content = input.content;
+
     const updatedProject = await prisma.project.update({
       where: {
         id: notesId,
       },
-      data: {
-        ...(typeof body.name === "string" && {
-          name: body.name.trim(),
-        }),
-
-        ...(typeof body.content === "string" && {
-          content: body.content,
-        }),
-      },
+      data: updateData,
     });
 
     return NextResponse.json({

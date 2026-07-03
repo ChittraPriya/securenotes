@@ -46,17 +46,6 @@ function makeSettledLink(overrides: Record<string, unknown> = {}) {
   }
 }
 
-function makeProject(overrides: Record<string, unknown> = {}) {
-  return {
-    id: 'project-1',
-    name: 'Test Project',
-    description: 'A test project',
-    content: 'Some content',
-    ownerId: 'user-1',
-    ...overrides,
-  }
-}
-
 // Helper to build mock tx for consumeShareLink
 function makeMockTx(link: ReturnType<typeof makeSettledLink>) {
   let currentLink = { ...link }
@@ -80,7 +69,7 @@ function makeMockTx(link: ReturnType<typeof makeSettledLink>) {
       updateMany: vi.fn(async () => {
         // Simulate atomic consume: mark usedAt if ONE_TIME
         if (currentLink.shareType === 'ONE_TIME' && !currentLink.usedAt) {
-          currentLink.usedAt = new Date()
+          (currentLink as Record<string, unknown>).usedAt = new Date()
         }
         currentLink.viewCount++
         return { count: 1 }
@@ -423,7 +412,7 @@ describe('consumeShareLink', () => {
             if (!used) {
               used = true
               consumptionCount++
-              sharedLink.usedAt = new Date()
+              ;(sharedLink as Record<string, unknown>).usedAt = new Date()
               sharedLink.viewCount++
               return { count: 1 }
             }
@@ -441,8 +430,8 @@ describe('consumeShareLink', () => {
       shareLinkModule.consumeShareLink('test-token-xxx'),
     ])
 
-    const okResults = results.filter(r => r.kind === 'ok')
-    const invalidResults = results.filter(r => r.kind !== 'ok')
+    const okResults = results.filter((r: { kind: string }) => r.kind === 'ok')
+    const invalidResults = results.filter((r: { kind: string }) => r.kind !== 'ok')
 
     // Exactly one should succeed; the rest should be 'used' or 'invalid'
     expect(okResults).toHaveLength(1)

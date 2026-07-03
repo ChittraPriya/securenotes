@@ -2,6 +2,7 @@ import { auth } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 
 import prisma from '@/lib/prisma'
+import { createNoteSchema } from '@/lib/schemas'
 
 function getProjectSelection() {
   return {
@@ -46,22 +47,15 @@ export async function POST(request: Request) {
   } catch {
     body = {}
   }
-  
 
-  const parsedBody = typeof body === 'object' && body !== null ? (body as Record<string, unknown>) : {}
-  const rawName = parsedBody.name
-  const rawDescription = parsedBody.description
-
-  const name = typeof rawName === 'string' && rawName.trim() !== '' ? rawName.trim() : 'Untitled Project'
-  const description = typeof rawDescription === 'string' ? rawDescription : null
-  const content = typeof parsedBody.content === 'string' ? parsedBody.content : null
+  const input = createNoteSchema.parse(body)
 
   const project = await prisma.project.create({
     data: {
       ownerId: userId,
-      name,
-      description,
-      content,
+      name: input.name,
+      description: input.description,
+      content: input.content,
     },
     select: getProjectSelection(),
   })

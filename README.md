@@ -10,7 +10,7 @@ A note-sharing app where every share link is a sealed, single-purpose key: it op
 | Backend | Next.js Route Handlers (`app/api/**/route.ts`) |
 | Database | PostgreSQL |
 | ORM | Prisma |
-| Auth | JWT in an httpOnly cookie, bcrypt password hashing |
+| Auth | Clerk (authentication) with httpOnly session cookies |
 | Icons | lucide-react |
 
 > Route Handlers were used instead of a separate Hono.js server — they satisfy "Next.js API routes / Route Handlers or Hono.js" directly, and keep the whole app in one deployable Next.js project (simpler for a 1–2 day build, same request/response model).
@@ -23,12 +23,15 @@ npm install
 
 # 2. Configure environment
 cp .env.example .env
-# edit .env: set DATABASE_URL to your Postgres instance, and JWT_SECRET to a random string
+# edit .env: set DATABASE_URL to your Postgres instance,
+# add your Clerk API keys from https://dashboard.clerk.com,
+# and set SEED_USER_ID to your Clerk user ID if you want demo data
 
 # 3. Create the database schema
 npx prisma migrate dev --name init
 
-# 4. Seed a test user (optional, for grading/demo)
+# 4. Seed demo data (optional, for grading/demo)
+#    First set SEED_USER_ID in .env to your Clerk user ID (find it in Clerk Dashboard → Users)
 npx prisma db seed
 
 # 5. Run the app
@@ -36,33 +39,35 @@ npm run dev
 # open http://localhost:3000
 ```
 
-**Test credentials** (created by the seed script):
-```
-email:    demo@vaultnotes.test
-password: Demo12345
-```
+**Demo data** (created by the seed script):
+- 3 projects owned by the user identified by `SEED_USER_ID`
+- 3 share links on the "Getting Started Guide" project (one-time public, time-based public, password-protected)
+- 1 collaborator (`collaborator@example.com`) on "Architecture Notes"
 
 ## Database schema
 
 ```
-User
- ├─ id, email (unique), password (bcrypt hash), createdAt
- └─ notes: Note[]
-
-Note
- ├─ id, title, content, userId → User, createdAt
+Project
+ ├─ id, ownerId (Clerk user ID), name, description, content
+ ├─ status: DRAFT | ARCHIVED
+ ├─ createdAt, updatedAt
+ ├─ collaborators: ProjectCollaborator[]
  └─ shareLinks: ShareLink[]
+
+ProjectCollaborator
+ ├─ id, projectId → Project, collaboratorEmail
+ └─ @@unique([projectId, collaboratorEmail])
 
 ShareLink
  ├─ id, token (unique, random)
- ├─ noteId → Note
+ ├─ projectId → Project
  ├─ shareType:  ONE_TIME | TIME_BASED
  ├─ accessType: PUBLIC | PASSWORD
  ├─ passwordHash (bcrypt, null if PUBLIC)
- ├─ expiresAt (null unless TIME_BASED)
- ├─ isUsed       (flips true after a one-time link is successfully viewed)
- ├─ isRevoked    (owner can set this true any time)
- ├─ viewCount    (incremented only on a successful view)
+ ├─ expiryAt (null unless TIME_BASED)
+ ├─ viewCount (incremented only on a successful view)
+ ├─ usedAt (set on consume for ONE_TIME links)
+ ├─ revokedAt (owner can set this any time)
  ├─ failedAttempts, lockedUntil (brute-force protection)
  └─ createdAt
 ```
@@ -71,9 +76,9 @@ Full Prisma schema: `prisma/schema.prisma`.
 
 ## Share link flow
 
-1. **Create**: `POST /api/notes` creates the `Note` and its `ShareLink` in one call, generates a random `token` (128-bit, base64url, used in the URL), and — if password-protected — a human-typeable access key.
+1. **Create**: `POST /api/share` creates a `ShareLink` for a project, generates a random `token` (256-bit, hex, used in the URL), and — if password-protected — a human-typeable access key.
 2. **Visit**: `GET /share/[token]` page calls `GET /api/share/[token]`, which **only checks status** (invalid / revoked / expired / used / locked out / needs password / public) — it never increments the view count or marks anything used. This separation matters: checking status must be side-effect-free, or refreshing the page could burn a one-time link.
-3. **Consume**: Actually viewing the note — `POST /api/share/[token]` — is the only action that can increment `viewCount` or flip `isUsed`. Public links call this automatically on page load; password links call it after the visitor submits the key.
+3. **Consume**: Actually viewing the note — `POST /api/share/[token]/unlock` — is the only action that can increment `viewCount` or set `usedAt`. Public links call this automatically on page load; password links call it after the visitor submits the key.
 4. **Owner manages**: `/notes/[id]` lists the note's share link(s) with live status and a **Revoke** button.
 
 ## Password / key generation logic

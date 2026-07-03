@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server'
 
 import prisma from '@/lib/prisma'
 import { createShareLink } from '@/lib/share-link'
+import { createShareSchema } from '@/lib/schemas'
 
 export async function POST(request: Request) {
   const { userId } = await auth()
@@ -19,20 +20,19 @@ export async function POST(request: Request) {
     body = {}
   }
 
-  const parsedBody = typeof body === 'object' && body !== null ? (body as Record<string, unknown>) : {}
-  const rawProjectId = parsedBody.projectId
-  const rawShareType = parsedBody.shareType
-  const rawAccessType = parsedBody.accessType
-  const rawExpiryAt = parsedBody.expiryAt
-  const rawPassword = parsedBody.password
-
-  if (typeof rawProjectId !== 'string' || rawProjectId.trim() === '') {
-    return NextResponse.json({ error: 'projectId is required' }, { status: 400 })
+  const parsed = createShareSchema.safeParse(body)
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: parsed.error.issues[0]?.message ?? 'Invalid input' },
+      { status: 400 }
+    )
   }
+
+  const input = parsed.data
 
   const project = await prisma.project.findFirst({
     where: {
-      id: rawProjectId,
+      id: input.projectId,
       ownerId: userId,
     },
     select: { id: true },
@@ -42,35 +42,14 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Project not found or access denied' }, { status: 404 })
   }
 
-  const shareType = rawShareType === 'ONE_TIME' ? 'ONE_TIME' : 'TIME_BASED'
-  const accessType = rawAccessType === 'PASSWORD' ? 'PASSWORD' : 'PUBLIC'
-
-  let expiryAt: string | Date | null = null
-
-  if (shareType === 'TIME_BASED') {
-    if (typeof rawExpiryAt === 'string' && rawExpiryAt.trim() !== '') {
-      const parsedExpiry = new Date(rawExpiryAt)
-      if (Number.isNaN(parsedExpiry.getTime())) {
-        return NextResponse.json({ error: 'expiryAt must be a valid date' }, { status: 400 })
-      }
-      expiryAt = parsedExpiry
-    } else {
-      return NextResponse.json({ error: 'expiryAt is required for time-based links' }, { status: 400 })
-    }
-
-    if (expiryAt instanceof Date && expiryAt <= new Date()) {
-      return NextResponse.json({ error: 'expiryAt must be in the future' }, { status: 400 })
-    }
-  }
-
-  const password = typeof rawPassword === 'string' ? rawPassword : undefined
+  const expiryAt = input.expiryAt ? new Date(input.expiryAt) : null
 
   const createdShare = await createShareLink({
     projectId: project.id,
-    shareType,
-    accessType,
+    shareType: input.shareType,
+    accessType: input.accessType,
     expiryAt,
-    password,
+    password: input.password,
   })
 
   return NextResponse.json(
@@ -79,8 +58,8 @@ export async function POST(request: Request) {
       password: createdShare.password ?? null,
       shareLink: {
         token: createdShare.token,
-        shareType,
-        accessType,
+        shareType: input.shareType,
+        accessType: input.accessType,
         expiryAt: createdShare.shareLink.expiryAt,
       },
     },

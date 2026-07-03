@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 
 import { consumeShareLink } from '@/lib/share-link'
 import { checkRateLimit } from '@/lib/rate-limit'
+import { unlockSchema } from '@/lib/schemas'
 
 function getIp(request: Request): string {
   return request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
@@ -32,14 +33,12 @@ export async function POST(request: Request,
     body = {}
   }
 
-  const parsedBody = typeof body === 'object' && body !== null ? (body as Record<string, unknown>) : {}
-  const rawPassword = parsedBody.password
-
-  if (typeof rawPassword !== 'string' || rawPassword.trim() === '') {
+  const parsed = unlockSchema.safeParse(body)
+  if (!parsed.success) {
     return NextResponse.json({ error: 'password is required' }, { status: 400 })
   }
 
-  const result = await consumeShareLink(token, { password: rawPassword })
+  const result = await consumeShareLink(token, { password: parsed.data.password })
 
   switch (result.kind) {
     case 'ok':

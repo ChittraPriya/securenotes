@@ -3,14 +3,14 @@
 Update this file after every meaningful implementation change.
 
 ## Current Phase
-All P0 and P1 issues from `current-issues.md` have been resolved including testing.
+P0 and P1 issues resolved. P2 — Collaborator management, editor workspace, and seed script are complete.
 
 ## Testing
 - **Vitest configured** — vitest v4.1.9 installed with config at `vitest.config.ts`, tests directory at `tests/`, test excluded from Next.js build via tsconfig.
 - **Unit tests** — 27 tests for `createShareLink`, `getShareLinkStatus`, `consumeShareLink`, `revokeShareLink` covering: valid token, expired, revoked, already-used one-time, wrong password, missing password, lockout after 5 attempts, failed attempt reset on success, concurrent consumes (only one succeeds), ownership check on revoke, and non-owner returns not_found.
-- **API integration tests** — 14 tests covering: create → status → unlock → revoke lifecycle, 401/404/403/410/429/400 error responses for each endpoint, rate limiting on unlock, auth enforcement on create/revoke.
+- **API integration tests** — 26 tests covering: share link lifecycle (14 tests) + collaborator API (12 tests for GET/POST/DELETE with auth, ownership, validation, and conflict scenarios).
 - **Scripts** — `npm test` (vitest run) and `npm run test:watch` (vitest watch) added.
-- **Passing** — All 41 tests pass; `npm run build` passes.
+- **Passing** — All 53 tests pass; `npm run build` passes.
 
 ## Completed
 - Design system and UI primitives: shadcn/ui initialized with Radix/Lucide primitives, requested components installed, `lucide-react` installed, shared `cn()` helper added, and shadcn theme variables mapped to the Secure Notes light theme tokens.
@@ -22,6 +22,9 @@ All P0 and P1 issues from `current-issues.md` have been resolved including testi
 - Editor home API wiring: the editor home page now fetches owned/shared projects server-side, passes them into the sidebar, and uses a project actions hook to create, rename, and delete projects through the real API with dialog state and workspace navigation.
 - Editor workspace shell: added a server-rendered workspace route at `/editor/[id]` with reusable access helpers, an `AccessDenied` component for unauthorized or missing projects, and a full-viewport shell featuring the project title navbar, room sidebar, central canvas placeholder, and future AI sidebar placeholder.
 - Workspace sharing: added `POST /api/share`, `GET /api/share/[token]`, `POST /api/share/[token]/unlock`, and `PATCH /api/share/[token]/revoke`; wired sharing controls into the existing notes workspace; added a share page at `/share/[token]` supporting public and password-protected access with revocation and view counting.
+- Collaborator management (P2): added `addCollaboratorSchema` and `removeCollaboratorSchema` to `lib/schemas.ts`; created `GET/POST/DELETE /api/notes/[notesId]/collaborators` with auth, ownership, and email validation; created `WorkspaceCollaborators` UI component for add/list/remove; wired into both `notes/[notesId]` and `editor/[id]` pages with owner-only guard.
+- Editor workspace (P2): replaced the placeholder canvas in `/editor/[id]` with a functional `WorkspaceEditor` client component featuring an editable content textarea with debounced autosave (1.5s), save-status indicator in the header, embedded `WorkspaceSharing` and `WorkspaceCollaborators` panels, a collapsible AI chat sidebar with message history and input, and a footer showing created/updated timestamps. The server page now fetches `content`, `shareLinks`, and `collaborators` in parallel and passes them as props.
+- Prisma seed script (P2): created `prisma/seed.ts` — creates 3 demo projects (Getting Started Guide, Architecture Notes, Meeting Notes), 3 share links on the first project (one-time public, time-based public, password-protected), and 1 collaborator. Idempotent (skips if seed data already exists). Configured via `migrations.seed` in `prisma.config.ts`. Requires `SEED_USER_ID` env var. Updated `.env.example` and README with setup instructions, corrected schema docs, and removed outdated User/Note model references.
 
 ### P0 Issues (Verified Already Fixed)
 - **Separate GET status check from consume**: `getShareLinkStatus()` is already a pure read-only function with no side effects. `GET /api/share/[token]` correctly uses it.
@@ -39,9 +42,14 @@ All P0 and P1 issues from `current-issues.md` have been resolved including testi
 ### Other Verified
 - **Params type consistency**: All share routes (`GET /api/share/[token]`, `POST /api/share/[token]/unlock`, `PATCH /api/share/[token]/revoke`) consistently use `Promise<{ token: string }>` and `await params`.
 
+### P2 Tasks Remaining (5th Task)
+- **Next.js error boundary components for share link pages**: Added `app/share/[token]/error.tsx` and `app/notes/share/[token]/error.tsx`. Both use `"use client"`, match the existing share page design tokens (`bg-bg-base`, `border-border-default`, `accent-primary`, etc.), display user-friendly fallback UI with an error description, error digest reference, and a "Try again" button wired to `reset()`. The main share page error covers unexpected failures during share link loading; the legacy redirect error covers failures during the redirect to the canonical URL.
+
 ## Architecture Decisions
 - JWT secret has no fallback value - app throws on boot if `JWT_SECRET` is missing.
 - Share link consumption uses a single atomic `updateMany` with `WHERE` conditions (not read-then-write).
 - Password key generation uses a 31-char alphabet (no I,O,U,0,1) with bias-safe random selection.
 - Brute-force protection uses lockout on the ShareLink record (5 failed attempts → 15 min lock).
 - Rate limiting uses in-memory storage (per-process; not suitable for multi-instance without a shared store).
+- Zod v4 is used for API input validation. Schemas live in `lib/schemas.ts` and use `.catch()`/`.default()` for graceful fallback on create routes, `.safeParse()` with 400 response for update/unlock/share routes.
+- Collaborators are email-based (no userId link), with a unique constraint on `[projectId, collaboratorEmail]` to prevent duplicates. Only the project owner can add or remove collaborators.

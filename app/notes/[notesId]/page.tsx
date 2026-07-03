@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 
 import { auth } from "@clerk/nextjs/server";
 
+import { WorkspaceCollaborators } from "@/components/editor/workspace-collaborators";
 import {
   WorkspaceSharing,
   type WorkspaceShareLink,
@@ -64,6 +65,21 @@ export default async function NoteWorkspacePage({
     createdAt: link.createdAt.toISOString(),
   }));
 
+  const collaborators = await prisma.projectCollaborator.findMany({
+    where: { projectId: note.id },
+    orderBy: { createdAt: "desc" },
+    select: {
+      id: true,
+      collaboratorEmail: true,
+      createdAt: true,
+    },
+  });
+
+  const normalizedCollaborators = collaborators.map((c) => ({
+    ...c,
+    createdAt: c.createdAt.toISOString(),
+  }));
+
   return (
     <main className="min-h-screen bg-bg-base px-6 py-16 text-text-primary">
       <div className="mx-auto flex max-w-4xl flex-col gap-6 rounded-2xl border border-border-default bg-bg-surface p-8 shadow-sm">
@@ -89,6 +105,11 @@ export default async function NoteWorkspacePage({
         <WorkspaceSharing
           projectId={note.id}
           initialLinks={normalizedShareLinks as WorkspaceShareLink[]}
+        />
+
+        <WorkspaceCollaborators
+          projectId={note.id}
+          initialCollaborators={normalizedCollaborators}
         />
 
         <div className="flex items-center gap-3">
