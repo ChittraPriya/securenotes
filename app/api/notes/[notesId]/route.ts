@@ -110,12 +110,6 @@ export async function DELETE(
         },
       }),
 
-      prisma.note.deleteMany({
-        where: {
-          projectId: notesId,
-        },
-      }),
-
       prisma.project.delete({
         where: {
           id: notesId,

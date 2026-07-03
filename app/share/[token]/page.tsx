@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 export default function SharedWorkspacePage() {
   const params = useParams<{ token: string }>();
   const [status, setStatus] = useState<
-    "loading" | "ready" | "password_required" | "wrong_password" | "unavailable"
+    "loading" | "ready" | "password_required" | "wrong_password" | "locked" | "unavailable"
   >("loading");
   const [projectName, setProjectName] = useState("");
   const [description, setDescription] = useState("");
@@ -35,6 +35,12 @@ export default function SharedWorkspacePage() {
 
       if (data.requiresPassword) {
         setStatus("password_required");
+        return;
+      }
+
+      if (response.status === 429) {
+        setStatus("locked");
+        setMessage(data.error || "Too many attempts. Try again later.");
         return;
       }
 
@@ -64,6 +70,12 @@ export default function SharedWorkspacePage() {
       );
       setContent(data.project.content ?? "");
       setStatus("ready");
+      return;
+    }
+
+    if (response.status === 429) {
+      setStatus("locked");
+      setMessage(data.error || "Too many attempts. Try again later.");
       return;
     }
 
@@ -98,6 +110,16 @@ export default function SharedWorkspacePage() {
               {content || "No content available for this workspace."}
             </div>
           </>
+        ) : null}
+
+        {status === "locked" ? (
+          <div className="rounded-xl border border-border-default bg-bg-surface-raised p-4 text-sm text-text-secondary">
+            <div className="flex items-center gap-2 text-accent-primary">
+              <Lock className="h-4 w-4" />
+              <p className="text-sm font-semibold">Access locked</p>
+            </div>
+            <p className="mt-2">{message}</p>
+          </div>
         ) : null}
 
         {status === "password_required" || status === "wrong_password" ? (

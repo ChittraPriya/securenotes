@@ -11,18 +11,33 @@ export type ShareAccessKind =
   | 'ok'
   | 'password_required'
   | 'invalid_password'
+  | 'locked'
   | 'not_found'
   | 'revoked'
   | 'expired'
   | 'used'
   | 'invalid'
 
+const MAX_FAILED_ATTEMPTS = 5
+const LOCK_DURATION_MS = 15 * 60 * 1000 // 15 minutes
+
 function generateSecureToken() {
   return crypto.randomBytes(32).toString('hex')
 }
 
-function generatePasswordKey() {
-  return crypto.randomBytes(3).toString('hex').toUpperCase()
+const PASSWORD_ALPHABET = 'ABCDFGHJKLMNPQRSTVWXYZ23456789' // 31 chars (no I,O,U,0,1)
+const PASSWORD_MAX_BIAS_SAFE = 248 // largest multiple of 31 under 256
+
+function generatePasswordKey(): string {
+  const chars: string[] = []
+  while (chars.length < 8) {
+    const byte = crypto.randomBytes(1)[0]!
+    // Reject biased values to ensure uniform distribution
+    if (byte < PASSWORD_MAX_BIAS_SAFE) {
+      chars.push(PASSWORD_ALPHABET[byte % PASSWORD_ALPHABET.length]!)
+    }
+  }
+  return `${chars.slice(0, 4).join('')}-${chars.slice(4).join('')}`
 }
 
 function normalizeExpiry(expiryAt: string | Date | null | undefined) {
@@ -108,6 +123,10 @@ export async function getShareLinkStatus(token: string) {
 
 
   if (shareLink.accessType === "PASSWORD") {
+    // Expose lock status on status check too
+    if (shareLink.lockedUntil && new Date() < shareLink.lockedUntil) {
+      return { kind: "locked" as const, shareLink };
+    }
     return {
       kind: "password_required" as const,
       shareLink,
@@ -161,9 +180,38 @@ export async function consumeShareLink(token: string, options?: { password?: str
         return { kind: 'password_required' as const, shareLink }
       }
 
+      // Check lockout
+      if (shareLink.lockedUntil && now < shareLink.lockedUntil) {
+        return { kind: 'locked' as const, shareLink }
+      }
+
       const isValidPassword = await bcrypt.compare(options.password, shareLink.passwordHash ?? '')
       if (!isValidPassword) {
+        // Increment failed attempts atomically
+        const newCount = shareLink.failedAttempts + 1
+        if (newCount >= MAX_FAILED_ATTEMPTS) {
+          await tx.shareLink.update({
+            where: { id: shareLink.id },
+            data: {
+              failedAttempts: newCount,
+              lockedUntil: new Date(now.getTime() + LOCK_DURATION_MS),
+            },
+          })
+        } else {
+          await tx.shareLink.update({
+            where: { id: shareLink.id },
+            data: { failedAttempts: newCount },
+          })
+        }
         return { kind: 'invalid_password' as const, shareLink }
+      }
+
+      // Successful password — reset failed attempts
+      if (shareLink.failedAttempts > 0 || shareLink.lockedUntil) {
+        await tx.shareLink.update({
+          where: { id: shareLink.id },
+          data: { failedAttempts: 0, lockedUntil: null },
+        })
       }
     }
 

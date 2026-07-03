@@ -1,11 +1,29 @@
 import { NextResponse } from 'next/server'
 
 import { consumeShareLink } from '@/lib/share-link'
+import { checkRateLimit } from '@/lib/rate-limit'
+
+function getIp(request: Request): string {
+  return request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
+    ?? request.headers.get('x-real-ip')
+    ?? 'unknown'
+}
 
 export async function POST(request: Request, 
   { params }: { params: Promise<{ token: string }> }
 ) {
   const { token } = await params
+
+  const rateCheck = checkRateLimit(`unlock:${getIp(request)}`)
+  if (!rateCheck.allowed) {
+    return NextResponse.json({ error: 'Too many requests. Try again later.' }, {
+      status: 429,
+      headers: {
+        'Retry-After': String(Math.ceil(rateCheck.resetIn / 1000)),
+      },
+    })
+  }
+
   let body: unknown
 
   try {
@@ -37,6 +55,8 @@ export async function POST(request: Request,
       })
     case 'invalid_password':
       return NextResponse.json({ error: 'Incorrect password' }, { status: 401 })
+    case 'locked':
+      return NextResponse.json({ error: 'Too many attempts. Try again later.' }, { status: 429 })
     case 'not_found':
       return NextResponse.json({ error: 'Share link not found' }, { status: 404 })
     case 'revoked':

@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { EditorNavbar } from "@/components/editor/editor-navbar";
 import { NotesSidebar } from "@/components/editor/notes-sidebar";
 import { useProjectActions } from "@/hooks/use-project-actions";
@@ -165,8 +166,8 @@ export function EditorHomePage({
               <div className="grid gap-2">
                 <Label>Content</Label>
 
-                <textarea
-                  className="min-h-32 rounded-md border p-3"
+                <Textarea
+                  className="min-h-32"
                   placeholder="Write your note content..."
                   value={content}
                   onChange={(e) => setContent(e.target.value)}

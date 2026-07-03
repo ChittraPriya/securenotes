@@ -3,10 +3,7 @@
 Update this file after every meaningful implementation change.
 
 ## Current Phase
-The workspace-sharing flow is now implemented for the existing notes workspace, including share generation, password-protected access, revocation, and a dedicated public share view.
-
-## Current Goal
-Verify the build end to end and record the completed sharing work.
+All P0 and P1 issues from `current-issues.md` have been resolved.
 
 ## Completed
 - Design system and UI primitives: shadcn/ui initialized with Radix/Lucide primitives, requested components installed, `lucide-react` installed, shared `cn()` helper added, and shadcn theme variables mapped to the Secure Notes light theme tokens.
@@ -19,30 +16,25 @@ Verify the build end to end and record the completed sharing work.
 - Editor workspace shell: added a server-rendered workspace route at `/editor/[id]` with reusable access helpers, an `AccessDenied` component for unauthorized or missing projects, and a full-viewport shell featuring the project title navbar, room sidebar, central canvas placeholder, and future AI sidebar placeholder.
 - Workspace sharing: added `POST /api/share`, `GET /api/share/[token]`, `POST /api/share/[token]/unlock`, and `PATCH /api/share/[token]/revoke`; wired sharing controls into the existing notes workspace; added a share page at `/share/[token]` supporting public and password-protected access with revocation and view counting.
 
-## In Progress
-- Final build verification and follow-up polish.
+### P0 Issues (Verified Already Fixed)
+- **Separate GET status check from consume**: `getShareLinkStatus()` is already a pure read-only function with no side effects. `GET /api/share/[token]` correctly uses it.
+- **Auth + ownership check on revoke**: `revokeShareLink()` already verifies the requesting user owns the project. `PATCH /api/share/[token]/revoke` correctly calls `auth()` and passes `userId`.
 
-## Next Up
-1. README write-up (setup, schema, flows, race-condition answers).
-2. Demo video recording.
-3. Optional hardening pass for rate limiting and more polished share UX.
+### P1 Issues Resolved
+1. **Add `.env.example`** — created with all required env vars (Clerk keys, redirect URLs, DATABASE_URL). File: `.env.example`.
+2. **Fix dead redirect** — `app/notes/share/[token]/page.tsx` now redirects to `/share/${token}` instead of the non-existent `/share`. File: `app/notes/share/[token]/page.tsx`.
+3. **Replace raw `<textarea>` with shadcn `<Textarea>`** — the raw HTML textarea in the create dialog now uses the installed shadcn `Textarea` component. Files: `components/editor/editor-home-page.tsx`.
+4. **Strengthen password key generation** — changed from 6 hex chars (~24 bits) to `XXXX-XXXX` format using a 31-character alphabet (no ambiguous chars: I,O,U,0,1) with bias-safe random selection (~40 bits). File: `lib/share-link.ts`.
+5. **Add brute-force protection** — added `failedAttempts` (INT, default 0) and `lockedUntil` (TIMESTAMP) columns to ShareLink. After 5 failed password attempts, the link locks for 15 minutes. Returns `locked` status from both GET status check and POST unlock. Files: `prisma/models/project.prisma`, `prisma/schema.prisma`, `prisma/migrations/20260703045927_add_brute_force_protection/`, `lib/share-link.ts`, `app/api/share/[token]/route.ts`, `app/api/share/[token]/unlock/route.ts`, `app/share/[token]/page.tsx`.
+6. **Add rate limiting** — added in-memory rate limiter (30 req/min per IP) on the unlock endpoint. File: `lib/rate-limit.ts`, `app/api/share/[token]/unlock/route.ts`.
+7. **Resolve Project vs Note model duality** — removed the orphaned `Note` model (never queried, only referenced in DELETE cleanup) and its relation from `Project`. Dropped the `Note` table from the database. Files: `prisma/models/notes.prisma` (deleted), `prisma/models/project.prisma`, `prisma/migrations/20260703051943_drop_note_model/`, `app/api/notes/[notesId]/route.ts`.
 
-## Open Questions
-- Password/key generation: confirm length and character set for the dynamic access key (e.g. 8-character alphanumeric vs longer token) - needs a decision in `product-spec.md` before building.
-- Rate limiting on password attempts for `/share/[token]` - POC requirements ask "how would you prevent brute-force" in the README; decide whether to actually implement basic rate limiting or only answer it conceptually.
+### Other Verified
+- **Params type consistency**: All share routes (`GET /api/share/[token]`, `POST /api/share/[token]/unlock`, `PATCH /api/share/[token]/revoke`) consistently use `Promise<{ token: string }>` and `await params`.
 
 ## Architecture Decisions
-- JWT secret has no fallback value - app throws on boot if `JWT_SECRET` is missing. Decided after the prior submission's interview surfaced `process.env.JWT_SECRET || "dev-secret-change-me"` as a security gap.
-- Share link consumption uses a single atomic `updateMany` (status check + state change in one query) rather than separate read-then-write calls, specifically to prevent two concurrent requests from both succeeding on a one-time link.
-- UI theme is dark-only at `:root`: shadcn's semantic variables (`--background`, `--card`, `--border`, etc.) are aliases to the named Secure Notes tokens, so components do not fall back to shadcn's default light palette when no `.dark` class is present.
-- Notes sidebar is a fixed-position overlay (`translate-x` slide-in) so opening it does not push or reflow the editor canvas.
-- Notes sidebar receives the signed-in user's owned notes as props for now; auth/database-backed loading belongs to a later API/data unit.
-- Project CRUD routes use the existing Project model and the Clerk `userId` as the `ownerId`, with owner-only rename/delete enforcement enforced in the API layer before any mutation.
-
-## Session Notes
-- This is a deliberate rebuild of an earlier POC for Peacock India. The MD gave a second chance after the CEO flagged that the build was strong but the explanation wasn't. The bar this time is verbal fluency on: the share-link two-step flow, the DB relationships, the JWT fallback fix, and the atomic update pattern - not just a working demo.
-- `AGENTS.md` references `context/product-overview.md`, but the repository currently contains the same required overview context as `context/project-overview.md`.
-- Design-system verification: `npm run build` passes. The first build hit stale `.next` output from the CLI prompt flow; clearing generated `.next` cache fixed it.
-- `ui-context.md` now specifies light/dark theme support, while the prior design-system tracker entry records a dark-only implementation. Treat theme alignment as a separate follow-up unit; this editor chrome pass stays scoped to `02-editor.md`.
-- Editor chrome verification: `npm run lint` and `npm run build` pass.
-- Git status shows the project source files as untracked because the repository's first commit only included `README.md`.
+- JWT secret has no fallback value - app throws on boot if `JWT_SECRET` is missing.
+- Share link consumption uses a single atomic `updateMany` with `WHERE` conditions (not read-then-write).
+- Password key generation uses a 31-char alphabet (no I,O,U,0,1) with bias-safe random selection.
+- Brute-force protection uses lockout on the ShareLink record (5 failed attempts → 15 min lock).
+- Rate limiting uses in-memory storage (per-process; not suitable for multi-instance without a shared store).

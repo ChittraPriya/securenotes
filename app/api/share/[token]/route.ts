@@ -30,6 +30,8 @@ export async function GET( _request: Request,
           expiryAt: result.shareLink.expiryAt,
         },
       })
+    case 'locked':
+      return NextResponse.json({ error: 'Too many attempts. Try again later.' }, { status: 429 })
     case 'not_found':
       return NextResponse.json({ error: 'Share link not found' }, { status: 404 })
     case 'revoked':
