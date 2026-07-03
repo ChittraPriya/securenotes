@@ -41,10 +41,10 @@ Priority: **P0** = ship-blocking, **P1** = should fix, **P2** = nice to have
 ## P2 — Nice to Have
 
 - [x] **Add zod input validation** at API boundaries as specified in `code-standards.md`. Replace manual `typeof` checks.
-- [ ] **Implement collaborator UI.** The `ProjectCollaborator` model exists in the schema but there's no UI or API to manage collaborators.
-- [ ] **Flesh out the editor workspace.** `/editor/[id]` is currently a placeholder shell. The AI sidebar shows placeholder text.
-- [ ] **Add a seed script** so `npx prisma db seed` works as the README advertises.
-- [ ] **Add error boundary components** for share link pages (graceful fallbacks instead of blank pages on unexpected errors).
+- [x] **Implement collaborator UI.** The `ProjectCollaborator` model exists in the schema but there's no UI or API to manage collaborators.
+- [x] **Flesh out the editor workspace.** `/editor/[id]` is currently a placeholder shell. The AI sidebar shows placeholder text.
+- [x] **Add a seed script** so `npx prisma db seed` works as the README advertises.
+- [x] **Add error boundary components** for share link pages (graceful fallbacks instead of blank pages on unexpected errors).
 
 ---
 
