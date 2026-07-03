@@ -31,9 +31,9 @@ Priority: **P0** = ship-blocking, **P1** = should fix, **P2** = nice to have
 
 ## P1 — Testing
 
-- [ ] **Set up a testing framework** (Vitest or Jest) in the project.
-- [ ] **Write unit tests for share-link logic** — `createShareLink`, `getShareLinkAccess`, `revokeShareLink`, `consumeShareLink`. Cover: valid token, expired, revoked, already-used one-time, wrong password, concurrent consumes.
-- [ ] **Write API route integration tests** — at minimum for share link lifecycle (create → status check → unlock → consume → revoke).
+- [x] **Set up a testing framework** (Vitest) in the project.
+- [x] **Write unit tests for share-link logic** — `createShareLink`, `getShareLinkStatus`, `revokeShareLink`, `consumeShareLink`. Cover: valid token, expired, revoked, already-used one-time, wrong password, concurrent consumes.
+- [x] **Write API route integration tests** — share link lifecycle (create → status check → unlock → consume → revoke).
 - [x] **Verify `npm run build` passes after all changes** (already passing, but don't break it).
 
 ---

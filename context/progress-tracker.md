@@ -3,7 +3,14 @@
 Update this file after every meaningful implementation change.
 
 ## Current Phase
-All P0 and P1 issues from `current-issues.md` have been resolved.
+All P0 and P1 issues from `current-issues.md` have been resolved including testing.
+
+## Testing
+- **Vitest configured** — vitest v4.1.9 installed with config at `vitest.config.ts`, tests directory at `tests/`, test excluded from Next.js build via tsconfig.
+- **Unit tests** — 27 tests for `createShareLink`, `getShareLinkStatus`, `consumeShareLink`, `revokeShareLink` covering: valid token, expired, revoked, already-used one-time, wrong password, missing password, lockout after 5 attempts, failed attempt reset on success, concurrent consumes (only one succeeds), ownership check on revoke, and non-owner returns not_found.
+- **API integration tests** — 14 tests covering: create → status → unlock → revoke lifecycle, 401/404/403/410/429/400 error responses for each endpoint, rate limiting on unlock, auth enforcement on create/revoke.
+- **Scripts** — `npm test` (vitest run) and `npm run test:watch` (vitest watch) added.
+- **Passing** — All 41 tests pass; `npm run build` passes.
 
 ## Completed
 - Design system and UI primitives: shadcn/ui initialized with Radix/Lucide primitives, requested components installed, `lucide-react` installed, shared `cn()` helper added, and shadcn theme variables mapped to the Secure Notes light theme tokens.
